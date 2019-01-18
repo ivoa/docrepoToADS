@@ -1,0 +1,23 @@
+# This file is maintained by the document coordinator.  It contains
+# landing page URLs for the notes anointed by the exec for publication
+# to ADS.
+http://www.ivoa.net/documents/Notes/IVOAParticipation/index.html
+http://www.ivoa.net/documents/Notes/IVOAArchitecture/index.html
+http://www.ivoa.net/documents/Notes/IVOATechRoadmap2011/index.html
+http://www.ivoa.net/documents/Notes/IVOATechRoadmap2010/index.html
+http://www.ivoa.net/documents/Notes/IVOATechRoadmap2009/index.html
+http://www.ivoa.net/documents/Notes/IVOATechRoadmap2008/index.html
+http://www.ivoa.net/documents/Notes/IVOARoadmap2007/index.html
+http://www.ivoa.net/documents/Notes/IVOARoadmap2006/index.html
+http://www.ivoa.net/documents/Notes/IVOARoadmap2005/index.html
+http://www.ivoa.net/documents/Notes/OECDWhitePaper/index.html
+http://www.ivoa.net/documents/Notes/SVOFPS/index.html
+http://www.ivoa.net/documents/Notes/TAPNotes/index.html
+http://www.ivoa.net/documents/Notes/VOTableSTC/index.html
+http://www.ivoa.net/documents/Notes/STC-S/index.html
+http://www.ivoa.net/documents/Notes/AstrObjectOntologyUseCases/index.html
+http://www.ivoa.net/documents/Notes/AstrObjectOntology/index.html
+http://www.ivoa.net/documents/Notes/RDFVORegistry/index.html
+http://www.ivoa.net/documents/Notes/RegistryOfRegistries/index.html
+http://www.ivoa.net/documents/Notes/UTypeListCharacterisationDM/index.html
+http://www.ivoa.net/documents/Notes/AOIMetadata/index.html
