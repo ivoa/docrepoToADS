@@ -66,6 +66,7 @@ Just run:
 
 [recommendation: set the token in your environment and run
 
+  rm -f httpwwwivoanetdocuments.cache
 	python harvest.py -C -a $ADS_TOKEN > ads.recs
 ]
 

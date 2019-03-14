@@ -51,7 +51,6 @@ import os
 import re
 import sys
 import traceback
-import urllib
 import urlparse
 
 import BeautifulSoup
@@ -97,21 +96,16 @@ class Finished(Exception):
 		self.payload = payload
 		Exception.__init__(self, "Unexpected div")
 
-class AppURLopener(urllib.FancyURLopener):
-    version = "IVOA-ADS bridge"
-
-urllib._urlopener = AppURLopener()
-
 
 def get_with_cache(url):
 	cacheName = re.sub("[^\w]+", "", url)+".cache"
 	if CACHE_RESULTS and os.path.exists(cacheName):
-		doc = open(cacheName).read()
+		doc = open(cacheName).read().decode("utf-8")
 	else:
-		doc = urllib.urlopen(url).read()
+		doc = requests.get(url).text
 		if CACHE_RESULTS:
 			f = open(cacheName, "w")
-			f.write(doc)
+			f.write(doc.encode("utf-8"))
 			f.close()
 	return doc
 
@@ -531,7 +525,7 @@ class DocumentCollection(object):
 		from the index at root_url.
 		"""
 		doc_index = BeautifulSoup.BeautifulSoup(
-			urllib.urlopen(root_url).read())
+			requests.get(root_url).text)
 		docs = []
 		
 		for url in itertools.chain(
