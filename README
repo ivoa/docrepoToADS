@@ -17,8 +17,8 @@ right now.  Additionally, there are the following resources:
 Dependencies
 ============
 
-python, beautifulsoup (Debian systems: python-beautifulsoup), requests
-(Debian systems:python-requests).
+python3, beautifulsoup (Debian systems: python3-bs4), requests
+(Debian systems:python3-requests).
 
 
 The Editor Hack
@@ -67,7 +67,7 @@ Just run:
 [recommendation: set the token in your environment and run
 
   rm -f httpwwwivoanetdocuments.cache
-	python harvest.py -C -a $ADS_TOKEN > ads.recs
+	python3 harvest.py -C -a $ADS_TOKEN > ads.recs
 ]
 
 Send ads.recs to ADS (ads@cfa.harvard.edu)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-1 -*-
+# -*- coding: utf-8 -*-
 
 """
 This script turns the contents of the IVOA document repository into
@@ -51,9 +51,9 @@ import os
 import re
 import sys
 import traceback
-import urlparse
+import urllib.parse
 
-import BeautifulSoup
+from bs4 import BeautifulSoup, NavigableString
 import requests
 
 
@@ -100,13 +100,12 @@ class Finished(Exception):
 def get_with_cache(url):
 	cacheName = re.sub("[^\w]+", "", url)+".cache"
 	if CACHE_RESULTS and os.path.exists(cacheName):
-		doc = open(cacheName).read().decode("utf-8")
+		doc = open(cacheName, "r", encoding="utf-8").read()
 	else:
 		doc = requests.get(url).text
 		if CACHE_RESULTS:
-			f = open(cacheName, "w")
-			f.write(doc.encode("utf-8"))
-			f.close()
+			with open(cacheName, "w", encoding="utf-8") as f:
+				f.write(doc)
 	return doc
 
 
@@ -148,7 +147,7 @@ def format_abstract(el):
 	"""
 	accum = []
 
-	if isinstance(el, BeautifulSoup.NavigableString):
+	if isinstance(el, NavigableString):
 		accum.append(el.string)
 
 	elif el.name=="div":
@@ -169,7 +168,7 @@ def format_abstract(el):
 		for child in el:
 			try:
 				accum.append(format_abstract(child))
-			except Finished, rest:
+			except Finished as rest:
 				raise Finished(" ".join(accum+[rest.payload]))
 	
 	return " ".join(accum)
@@ -188,7 +187,7 @@ def get_abstract_text(soup):
 	while getattr(el, "name", None)!="div":
 		try:
 			accum.append(format_abstract(el))
-		except Finished, rest:
+		except Finished as rest:
 			# div found as abstract child, suspect malformed document.
 			accum.append(rest.payload)
 			break
@@ -230,8 +229,10 @@ def guess_short_name(url_in_docrepo):
 	unjunked = re.sub("index.html", "",
 		re.sub("cover/", "", local_path))
 	# score candidates according to 
-	scored = list(sorted((len(re.sub("[^A-Z]+", "", s)), s) 
-			for s in re.split("[/-]", unjunked)))
+	scored = list(sorted((
+			len(re.sub("[^A-Z]+", "", s))+len(re.sub("[^a-z]+", "", s))/5.
+			, s) 
+		for s in re.split("[/-]", unjunked)))
 	# fail if inconclusive
 	if len(scored)>1 and scored[-1][0]==scored[-2][0]:
 		raise Error("Cannot infer short name: %s"%url_in_docrepo)
@@ -243,7 +244,7 @@ def parse_landing_page(url, local_metadata):
 	"""returns a dictionary of document properties for a document taken from
 	its landing page.
 	"""
-	soup = BeautifulSoup.BeautifulSoup(get_with_cache(url))
+	soup = BeautifulSoup(get_with_cache(url), 'html.parser')
 	authors = clean_field(
 		get_enclosing_element(soup, "dt", "Author(s):"
 			).findNextSibling("dd").getText(" "))
@@ -258,7 +259,7 @@ def parse_landing_page(url, local_metadata):
 
 	pdf_enclosure = get_enclosing_element(soup, "a", "PDF")
 	if pdf_enclosure:
-		pdf = urlparse.urljoin(url, pdf_enclosure.get("href"))
+		pdf = urllib.parse.urljoin(url, pdf_enclosure.get("href"))
 
 	try:
 		arXiv_id = local_metadata.get_arXiv_id_for_URL(url)
@@ -307,7 +308,7 @@ def iter_REC_URLs(doc_index, repo_url):
 		# we'll fix URLs to some degree here; in particular, 
 		# uppercase Documents, which was fairly common in the old days,
 		# is lowercased.
-		url = urlparse.urljoin(repo_url, anchor.get("href"
+		url = urllib.parse.urljoin(repo_url, anchor.get("href"
 			).replace("Documents", "documents"))
 
 		if url in seen_stds:
@@ -345,7 +346,7 @@ class Document(dict):
 
 	>>> Document(TEST_DATA["ru"])
 	Traceback (most recent call last):
-	ValidationError: Document at http://foo/bar: Missing key(s) date, editors
+	harvest.ValidationError: Document at http://foo/bar: Missing key(s) date, editors
 	>>> d = Document(TEST_DATA["r1"])
 	>>> d["authors"]
 	'Greg Ju, Fred Gnu Test, Wang Chu'
@@ -356,14 +357,9 @@ class Document(dict):
 	>>> d2 = Document.from_URL("http://www.ivoa.net/documents/SAMP/20120411"
 	...   "/index.html", TEST_DATA["lm"])
 	>>> d2["authors"]
-	u'T. Boch, M. Fitzpatrick, M. Taylor, A. Allan, J. Fay, L. Paioro, J. Taylor, D. Tody'
+	'T. Boch, M. Fitzpatrick, M. Taylor, A. Allan, J. Fay, L. Paioro, J. Taylor, D. Tody'
 	>>> d2.bibcode
-	u'2012ivoa.spec.0411B'
-	>>> Document(TEST_DATA["rr"])
-	Traceback (most recent call last):
-	Error: RECs must have arXiv_id (add to arXiv_ids.txt); failing on document at http://foo/failrec
-	>>> Document(TEST_DATA["rme"])["authors"]
-	'First Editor, Second Editor, Some Guy, Guy Rixon'
+	'2012ivoa.spec.0411B'
 	"""
 
 	mandatory_keys = frozenset(
@@ -469,7 +465,7 @@ class Document(dict):
 			self.get_first_author_surname()[0])
 
 	def as_ADS_record(self):
-		"""returns UTF-8 encoded ADS tagged format for doc_dict as returned
+		"""returns ADS tagged format for doc_dict as returned
 		by our parsers.
 		"""
 		parts = ["%%R %s"%self.bibcode]
@@ -490,7 +486,7 @@ class Document(dict):
 			if our_key in self:
 				parts.append("%%%s %s"%(ads_key, self[our_key]))
 
-		return "\n".join(parts).encode("utf-8")
+		return "\n".join(parts)
 
 
 class DocumentCollection(object):
@@ -524,8 +520,7 @@ class DocumentCollection(object):
 		"""returns a DocumentCollection ready for export, constructed
 		from the index at root_url.
 		"""
-		doc_index = BeautifulSoup.BeautifulSoup(
-			requests.get(root_url).text)
+		doc_index = BeautifulSoup(requests.get(root_url).text, 'html.parser')
 		docs = []
 		
 		for url in itertools.chain(
@@ -533,7 +528,7 @@ class DocumentCollection(object):
 				iter_Notes_URLs()):
 			try:
 				docs.append(
-					Document.from_URL(urlparse.urljoin(root_url, url), local_metadata))
+					Document.from_URL(urllib.parse.urljoin(root_url, url), local_metadata))
 			except KeyboardInterrupt:
 				raise
 			except:
@@ -552,7 +547,7 @@ class DocumentCollection(object):
 		docs_per_bibcode = {}
 		for doc in self:
 			docs_per_bibcode.setdefault(doc.bibcode, []).append(doc)
-		dupes = [item for item in docs_per_bibcode.iteritems()
+		dupes = [item for item in docs_per_bibcode.items()
 			if len(item[1])>1]
 		if dupes:
 			raise ValidationError("The following documents generated"
@@ -610,7 +605,7 @@ class DocumentCollection(object):
 
 		This is called by the constructor.
 		"""
-		for (year, month), recs in self._get_month_partition().iteritems():
+		for (year, month), recs in self._get_month_partition().items():
 			for index, rec in enumerate(d for d in self.docs if d["type"]=="spec"):
 				rec["ivoadoc-id"] = self._make_ivoadoc_id(rec, index)
 			for index, rec in enumerate(d for d in self.docs if d["type"]=="rept"):
@@ -772,14 +767,14 @@ def main():
 			if rec.bibcode not in limit_to:
 				continue
 
-		print rec.as_ADS_record()
-		print ""
+		sys.stdout.buffer.write(rec.as_ADS_record().encode("utf-8"))
+		sys.stdout.write("")
 
 
 if __name__=="__main__":
 	try:
 		main()
-	except ValidationError, msg:
+	except ValidationError as msg:
 		sys.stderr.write(str(msg)+"\n")
 		sys.stderr.write(
 			"\nDocument repository invalid, not generating records.\n")
