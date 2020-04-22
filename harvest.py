@@ -244,7 +244,7 @@ def parse_landing_page(url, local_metadata):
 	"""returns a dictionary of document properties for a document taken from
 	its landing page.
 	"""
-	soup = BeautifulSoup(get_with_cache(url), 'html.parser')
+	soup = BeautifulSoup(get_with_cache(url), 'html5lib')
 	authors = clean_field(
 		get_enclosing_element(soup, "dt", "Author(s):"
 			).findNextSibling("dd").getText(" "))
@@ -520,7 +520,7 @@ class DocumentCollection(object):
 		"""returns a DocumentCollection ready for export, constructed
 		from the index at root_url.
 		"""
-		doc_index = BeautifulSoup(requests.get(root_url).text, 'html.parser')
+		doc_index = BeautifulSoup(requests.get(root_url).text, 'html5lib')
 		docs = []
 		
 		for url in itertools.chain(
