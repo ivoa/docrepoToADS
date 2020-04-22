@@ -18,7 +18,7 @@ Dependencies
 ============
 
 python3, beautifulsoup (Debian systems: python3-bs4), requests
-(Debian systems:python3-requests).
+(Debian systems:python3-requests), html5lib (Debian: python3-html5lib).
 
 
 The Editor Hack
