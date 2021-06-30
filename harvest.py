@@ -442,6 +442,9 @@ class Document(dict):
 		else:
 			self["authors"] = self["editors"]
 
+	_exceptional_surnames = {
+		"Preite Martinez"}
+
 	def get_first_author_surname(self):
 		"""returns the surname for the first author.
 
@@ -449,9 +452,14 @@ class Document(dict):
 		hence we should keep this in sync with what ADS wants.
 		"""
 		# current heuristics: first character of last "word" in front of the
-		# first comma.  This will fail for many interesting cases, but
-		# IOVA contributors appear to have tame names for now.
-		return self["authors"].split(",")[0].split()[-1]
+		# first comma.  This will fail for surnames consisting of multiple
+		# tokens.  We collect these in the _exceptional_surnames set above.
+		first_author = self["authors"].split(",")[0]
+		for surname in self._exceptional_surnames:
+			if first_author.endswith(surname):
+				return surname
+
+		return first_author.split()[-1]
 
 	@property
 	def bibcode(self):
