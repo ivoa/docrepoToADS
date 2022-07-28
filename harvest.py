@@ -304,6 +304,7 @@ def iter_REC_URLs(doc_index, repo_url):
 
 	for anchor in itertools.chain(
 			iter_links_from_table(rec_table, "rec"),
+			iter_links_from_table(rec_table, "ucd-en"),
 			iter_links_from_table(en_table, "en")):
 		# we'll fix URLs to some degree here; in particular, 
 		# uppercase Documents, which was fairly common in the old days,
@@ -332,6 +333,37 @@ def iter_Notes_URLs():
 
 ########################## record generation logic
 
+def parse_authors(literal):
+	"""returns authors from literal as a list.
+
+	This understands First1 Last1, First2 Last2 as well as
+	Last1, F.; Last2, J. formats.
+
+	As a sanity check, this will bomb out when there is no blank in
+	any particle.  Admittedly, that's very western-centric, but let's
+	discuss that when we get into trouble with this assumption.
+
+	>>> parse_authors("Last, J.; Greger, Max")
+	['Last, J.', 'Greger, Max']
+	>>> parse_authors('Greg Ju, Fred Gnu Test, Wang Chu')
+	['Greg Ju', 'Fred Gnu Test', 'Wang Chu']
+	>>> parse_authors("Messy, this.")
+	Traceback (most recent call last):
+	ValueError: Unlikely author name 'Messy'
+	"""
+	if ";" in literal:
+		res = literal.split(";")
+	else:
+		res = literal.split(",")
+
+	res = [s.strip() for s in res]
+	for part in res:
+		if not " " in part:
+			raise ValueError(f"Unlikely author name '{part}'")
+	
+	return res
+
+
 class Document(dict):
 	"""Metadata of an IVOA document.
 
@@ -354,6 +386,8 @@ class Document(dict):
 	'2014ivoa.spec.0307J'
 	>>> d.as_ADS_record()[:59]
 	'%R 2014ivoa.spec.0307J\\n%D 3/2014\\n%I ELECTR: http://foo/bar;'
+	>>> Document(TEST_DATA["rme"])["authors"]
+	'Editor, First; Editor, S.; Guy, S.; Rixon, G.'
 	>>> d2 = Document.from_URL("http://www.ivoa.net/documents/SAMP/20120411"
 	...   "/index.html", TEST_DATA["lm"])
 	>>> d2["authors"]
@@ -397,7 +431,7 @@ class Document(dict):
 		missing_keys = self.mandatory_keys-set(self)
 		if missing_keys:
 			raise ValidationError("Document at %s: Missing key(s) %s"%(
-				self.get("url", "<unknown origin>"), ", ".join(missing_keys)))
+				self.get("url", "<unknown origin>"), ", ".join(sorted(missing_keys))))
 
 	def _infer_type(self):
 		"""decides whether this document is a spec (Recommendation) or
@@ -425,22 +459,19 @@ class Document(dict):
 		if not self["editors"].strip():
 			return
 
-		eds = set(s.strip() for s in self["editors"].split(","))
-		auths =  [s.strip() for s in self["authors"].split(",")]
+		eds = parse_authors(self["editors"])
+		auths =  parse_authors(self["authors"])
 
-		# sanity check: if an item of eds or auths contains no blank,
-		# we have a bad author format
-		name_pattern = re.compile(r"[\. ]")
-		if ([item for item in eds if not name_pattern.search(item)]
-				or [item for item in auths if not name_pattern.search(item)]):
-			raise Exception("Bad author format suspected in %s/%s"%(
-				eds, auths))
-
-		non_editors = ", ".join(item for item in auths if item not in eds)
+		non_editors = [item for item in auths if item not in eds]
 		if non_editors:
-			self["authors"] = "%s, %s"%(self["editors"], non_editors)
+			auths = eds+non_editors
+
+		# unparsing: use ; as a separator if there is a comma in the first
+		# author (see parse_authors for the rationale).
+		if "," in auths[0]:
+			self["authors"] = "; ".join(auths)
 		else:
-			self["authors"] = self["editors"]
+			self["authors"] = ", ".join(auths)
 
 	_exceptional_surnames = {
 		"Preite Martinez"}
@@ -451,13 +482,19 @@ class Document(dict):
 		This is pure heuristics -- we need it for bibcode generation, and
 		hence we should keep this in sync with what ADS wants.
 		"""
-		# current heuristics: first character of last "word" in front of the
-		# first comma.  This will fail for surnames consisting of multiple
-		# tokens.  We collect these in the _exceptional_surnames set above.
-		first_author = self["authors"].split(",")[0]
-		for surname in self._exceptional_surnames:
-			if first_author.endswith(surname):
-				return surname
+		# current heuristics for First Last-format authors: first character of last
+		# "word" of the first token parsed from authors (after the editor hack).
+		# This will fail for surnames consisting of multiple tokens.  We collect
+		# these in the _exceptional_surnames set above.
+
+		first_author = parse_authors(self["authors"])[0]
+		if "," in first_author:
+			# we're in luck: Last, F. format
+			return first_author.split(",")[0]
+
+		for exception in self._exceptional_surnames:
+			if exception in first_author:
+				return exception
 
 		return first_author.split()[-1]
 
@@ -712,8 +749,8 @@ def _test():
 			"date": (2014, 3, 7), "abstract": "N/A", "pdf": "uh",
 			"journal": "IVOA Recommendation"},
 		"rme": {"url": "http://foo/twoeditors", "title": "I have two editors", 
-			"authors": "Second Editor, Some Guy, Guy Rixon, First Editor", 
-			"editors": "First Editor, Second Editor", 
+			"authors": "Editor, S.; Guy, S.; Rixon, G.; Editor, First", 
+			"editors": "Editor, First; Editor, S.", 
 			"date": (2014, 3, 20), "abstract": "N/A",
 			"journal": "IVOA Note"},
 		"lm": LocalMetadata(),
