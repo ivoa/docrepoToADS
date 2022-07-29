@@ -351,7 +351,7 @@ def parse_authors(literal):
 	Traceback (most recent call last):
 	ValueError: Unlikely author name 'Messy'
 	"""
-	if ";" in literal:
+	if re.search(r"[A-Z]\.$", literal) or ";" in literal:
 		res = literal.split(";")
 	else:
 		res = literal.split(",")
