@@ -68,7 +68,8 @@ BIBCODE_QUALIFIERS = {
 	"http://www.ivoa.net/documents/cover/ConeSearch-20080222.html": "Q",
 	"http://www.ivoa.net/documents/VOSpace/20091007/": "Q",
 	"http://www.ivoa.net/documents/SLAP/20101209/": "Q",
-}
+    "http://www.ivoa.net/documents/Coords/20221004/index.html": "Q",
+    }
 
 # endpoint of the ADS "bigquery" API
 ADS_ENDPOINT = "https://api.adsabs.harvard.edu/v1/search/bigquery?"
