@@ -1,7 +1,7 @@
 This directory contains software to turn the contents of the IVOA
 document repository into the tagged format of ADS.
 
-It is probably mainly of interest to the document coordinator.
+It is probably mainly of interest to the IVOA document coordinator.
 
 Most of the information comes from the document repository landing pages
 right now.  Additionally, there are the following resources:
@@ -60,24 +60,24 @@ option.
 Brief HOWTO
 ===========
 
-Just run:
+Just run::
 
 	python harvest.py -C -a your-access-token > ads.recs
 
-[recommendation: set the token in your environment and run
+[recommendation: set the token in your environment and run::
 
   rm -f httpwwwivoanetdocuments.cache
 	python3 harvest.py -C -a $ADS_TOKEN > ads.recs
 ]
 
-Send ads.recs to ADS (ads@cfa.harvard.edu)
+Send ads.recs to ADS.
 
 
 Open issues
 ============
 
 Can we sanely extract references?  Maybe at least for ivoatex-processed
-documents?
-
-
-2015-11-19 msdemlei@ari.uni-heidelberg.de
+documents?  In the latter case, that would be easy if we wanted to run
+TeX, as it's all BibTeX then.  But frankly, I'd rather not run TeX as
+part of this procedure.  Perhaps we should have a separate procedure for
+the references?

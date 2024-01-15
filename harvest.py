@@ -13,7 +13,7 @@ Among the complications are:
 (1) We're creating electronic document identifiers (see make_ivoadoc_id and
 following)
 
-(2) We're manipulating the author lists to ensure the editor(s) are in the 
+(2) We're manipulating the author lists to ensure the editor(s) are in the
 first position.
 
 (3) As ADS would rather not have records they already have resubmitted,
@@ -22,25 +22,11 @@ we query it using a "new API" endpoint.
 After all these complications, it might make sense to finally introduce
 classes for representing records (rather than dictionaries, the keys of
 which are defined through the namespace in the parse_landing_page
-function...) and probably the whole collection, too (rather than a simple 
+function...) and probably the whole collection, too (rather than a simple
 list).  MD might do this if there's another feature request...
 
 
-
-Copyright 2014-2015, Markus Demleitner <msdemlei@ari.uni-heidelberg.de>
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Street #330, Boston, MA 02111-1307, USA.
+Distributed by the IVOA under CC0, https://spdx.org/licenses/CC0-1.0.html
 """
 
 import argparse
@@ -203,7 +189,7 @@ def clean_field(s):
 	Don't do this to abstracts.
 	"""
 # Oh shucks, "Grid *and* Web Services" requires a special hack.
-	return re.sub(",? and ", ", ", 
+	return re.sub(",? and ", ", ",
 		re.sub("\s+", " ", s)).replace("Grid, ", "Grid and")
 
 
@@ -229,10 +215,10 @@ def guess_short_name(url_in_docrepo):
 	# cut known junk
 	unjunked = re.sub("index.html", "",
 		re.sub("cover/", "", local_path))
-	# score candidates according to 
+	# score candidates according to
 	scored = list(sorted((
 			len(re.sub("[^A-Z]+", "", s))+len(re.sub("[^a-z]+", "", s))/5.
-			, s) 
+			, s)
 		for s in re.split("[/-]", unjunked)))
 	# fail if inconclusive
 	if len(scored)>1 and scored[-1][0]==scored[-2][0]:
@@ -298,16 +284,16 @@ def iter_REC_URLs(doc_index, repo_url):
 	order is maintained.
 	"""
 	seen_stds = set()
-	rec_table = get_enclosing_element(doc_index, "h3", 
+	rec_table = get_enclosing_element(doc_index, "h3",
 		"Technical Specifications").findNextSibling("table")
-	en_table = get_enclosing_element(doc_index, "h3", 
+	en_table = get_enclosing_element(doc_index, "h3",
 		"Endorsed Note").findNextSibling("table")
 
 	for anchor in itertools.chain(
 			iter_links_from_table(rec_table, "rec"),
 			iter_links_from_table(rec_table, "ucd-en"),
 			iter_links_from_table(en_table, "en")):
-		# we'll fix URLs to some degree here; in particular, 
+		# we'll fix URLs to some degree here; in particular,
 		# uppercase Documents, which was fairly common in the old days,
 		# is lowercased.
 		url = urllib.parse.urljoin(repo_url, anchor.get("href"
@@ -426,7 +412,7 @@ class Document(dict):
 		return cls(parse_landing_page(url, local_metadata))
 
 	def validate(self):
-		"""raises a ValidationError if one or more of the mandatory_keys 
+		"""raises a ValidationError if one or more of the mandatory_keys
 		are missing.
 		"""
 		missing_keys = self.mandatory_keys-set(self)
@@ -505,9 +491,9 @@ class Document(dict):
 		"""
 		year, month, day = self["date"]
 		return "%sivoa.%s%s%02d%02d%s"%(
-			year, self["type"], 
+			year, self["type"],
 			BIBCODE_QUALIFIERS.get(self["url"], "."),
-			month, day, 
+			month, day,
 			self.get_first_author_surname()[0])
 
 	def as_ADS_record(self):
@@ -517,7 +503,7 @@ class Document(dict):
 		parts = ["%%R %s"%self.bibcode]
 
 		year, month, day = self["date"]
-		parts.append("%%D %s/%s"%(month, year)) 
+		parts.append("%%D %s/%s"%(month, year))
 
 		links = "%%I ELECTR: %s"%self["url"]
 		if "pdf" in self:
@@ -600,7 +586,7 @@ class DocumentCollection(object):
 				" clashing bibcodes: %s.  Fix by adding one of them to"
 				" BIBCODE_QUALIFIERS in the source."%(
 					" AND ALSO\n".join(
-						" and ".join(c["url"] for c in clashing[1]) 
+						" and ".join(c["url"] for c in clashing[1])
 							for clashing in dupes)))
 
 	def _make_ivoadoc_id(self, rec, index):
@@ -730,28 +716,28 @@ def _test():
 	"""
 	import doctest, harvest
 	harvest.TEST_DATA = {
-		"r1": {"url": "http://foo/bar", "title": "Test doc", 
-			"authors": "Fred Gnu Test, Wang Chu", "editors": "Greg Ju", 
+		"r1": {"url": "http://foo/bar", "title": "Test doc",
+			"authors": "Fred Gnu Test, Wang Chu", "editors": "Greg Ju",
 			"date": (2014, 3, 7), "abstract": "N/A", "pdf": "uh",
 			"journal": "IVOA Recommendation", "arXiv_id": "a-p/1"},
-		"r2": {"url": "http://foo/baz", "title": "More Testing", 
-			"authors": u"René Descartes", "editors": "J.C. Maxwell", 
+		"r2": {"url": "http://foo/baz", "title": "More Testing",
+			"authors": u"René Descartes", "editors": "J.C. Maxwell",
 			"date": (2014, 3, 7), "abstract": "N/A",
 			"journal": "IVOA Recommendation", "arXiv_id": "a-p/2"},
-		"r3": {"url": "http://foo/quux", "title": "Still more", 
-			"authors": "Leonhard Euler, Georg Cantor", 
+		"r3": {"url": "http://foo/quux", "title": "Still more",
+			"authors": "Leonhard Euler, Georg Cantor",
 			"editors": "Frederic Chopin",
 			"date": (2014, 5, 7), "abstract": "N/A",
 			"journal": "IVOA Note"},
 		"ru": {"url": "http://foo/bar", "title": "Test doc",
 			"journal": "Broken Mess", "abstract": "", "authors": "X"},
-		"rr": {"url": "http://foo/failrec", "title": "Test REC", 
-			"authors": "Fred Gnu Test, Wang Chu", "editors": "Greg Ju", 
+		"rr": {"url": "http://foo/failrec", "title": "Test REC",
+			"authors": "Fred Gnu Test, Wang Chu", "editors": "Greg Ju",
 			"date": (2014, 3, 7), "abstract": "N/A", "pdf": "uh",
 			"journal": "IVOA Recommendation"},
-		"rme": {"url": "http://foo/twoeditors", "title": "I have two editors", 
-			"authors": "Editor, S.; Guy, S.; Rixon, G.; Editor, First", 
-			"editors": "Editor, First; Editor, S.", 
+		"rme": {"url": "http://foo/twoeditors", "title": "I have two editors",
+			"authors": "Editor, S.; Guy, S.; Rixon, G.; Editor, First",
+			"editors": "Editor, First; Editor, S.",
 			"date": (2014, 3, 20), "abstract": "N/A",
 			"journal": "IVOA Note"},
 		"lm": LocalMetadata(),
