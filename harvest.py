@@ -30,7 +30,6 @@ Distributed by the IVOA under CC0, https://spdx.org/licenses/CC0-1.0.html
 """
 
 import argparse
-import cgi
 import itertools
 import json
 import os
@@ -85,7 +84,7 @@ class Finished(Exception):
 
 
 def get_with_cache(url):
-	cacheName = re.sub("[^\w]+", "", url)+".cache"
+	cacheName = re.sub(r"[^\w]+", "", url)+".cache"
 	if CACHE_RESULTS and os.path.exists(cacheName):
 		doc = open(cacheName, "r", encoding="utf-8").read()
 	else:
@@ -190,7 +189,7 @@ def clean_field(s):
 	"""
 # Oh shucks, "Grid *and* Web Services" requires a special hack.
 	return re.sub(",? and ", ", ",
-		re.sub("\s+", " ", s)).replace("Grid, ", "Grid and")
+		re.sub(r"\s+", " ", s)).replace("Grid, ", "Grid and")
 
 
 SHORT_NAME_EXCEPTIONS = {
