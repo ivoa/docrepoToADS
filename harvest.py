@@ -695,7 +695,7 @@ def filter_unpublished_bibcodes(bibcodes, auth):
 
 	req = requests.post(ADS_ENDPOINT,
 		params=params,
-		headers={'Authorization': 'Bearer:%s'%auth},
+		headers={'Authorization': 'Bearer %s'%auth},
 		data=payload)
 	response = json.loads(req.text)
 
