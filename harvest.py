@@ -642,11 +642,46 @@ class DocumentCollection(object):
 			for index, rec in enumerate(d for d in self.docs if d["type"]=="rept"):
 				rec["ivoadoc-id"] = self._make_ivoadoc_id(rec, index)
 
+	@staticmethod
+	def _guess_short_name(doc_uri):
+		"""returns the IVOA short name, lowercased, from a document repository
+		URI.
+
+		This is not really well-defined due to varying historical practices.
+		Our heuristics is: go for "documents", take the next segment; if that
+		is in a stopword list, take still the next segment, otherwise return it.
+		"""
+		parts = doc_uri.lower().split("/")
+		after_documents = False
+		stop_words = {'notes', 'cover'}
+
+		for p in parts:
+			if after_documents:
+				if p in stop_words:
+					continue
+				else:
+					return p
+
+			if p=="documents":
+				after_documents = True
+
+		raise ValueError(f"Docrepo URI without 'document': {doc_uri}")
+
+	def get_bibcode_mapping(self):
+		"""returns a dictionary of document short names to bibcodes for it.
+		"""
+		shortname_to_bibcodes = {}
+		for doc in self.docs:
+			shortname_to_bibcodes.setdefault(
+				self._guess_short_name(doc["url"]), []).append(doc.bibcode)
+
+		return shortname_to_bibcodes
+
 
 ########################## local metadata injection
 
 class LocalMetadata(object):
-	"""A container for parsed metadata from kept in the SVN repo.
+	"""A container for parsed metadata from kept in the github repo.
 
 	Currently, that's a mapping from document short names to arXiv ids, kept in
 	arXiv_map.  By Exec decree, this is only available for IVOA RECs.
@@ -788,6 +823,9 @@ def main():
 		dc = DocumentCollection.from_repo_URL(
 			args.repo_url, local_metadata)
 
+	with open("bibcode_mapping.json", "w") as f:
+		json.dump(dc.get_bibcode_mapping(), f)
+
 	limit_to = None
 	if args.ads_token:
 		limit_to = set(filter_unpublished_bibcodes(
@@ -800,7 +838,7 @@ def main():
 
 		sys.stdout.buffer.write(rec.as_ADS_record().encode("utf-8"))
 		sys.stdout.write("")
-
+	
 
 if __name__=="__main__":
 	try:

@@ -2,3 +2,4 @@ __pycache__
 *.swp
 http*cache
 ads.recs
+bibcode_mapping.json
