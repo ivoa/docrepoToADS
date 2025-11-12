@@ -651,18 +651,18 @@ class DocumentCollection(object):
 		Our heuristics is: go for "documents", take the next segment; if that
 		is in a stopword list, take still the next segment, otherwise return it.
 		"""
-		parts = doc_uri.lower().split("/")
+		parts = doc_uri.split("/")
 		after_documents = False
 		stop_words = {'notes', 'cover'}
 
 		for p in parts:
 			if after_documents:
-				if p in stop_words:
+				if p.lower() in stop_words:
 					continue
 				else:
 					return p
 
-			if p=="documents":
+			if p.lower()=="documents":
 				after_documents = True
 
 		raise ValueError(f"Docrepo URI without 'document': {doc_uri}")
