@@ -99,7 +99,7 @@ def get_enclosing_element(soup, tag, text):
 	"""returns the first match of tag that contains an element containg
 	text.
 	"""
-	for el in soup.findAll(tag):
+	for el in soup.find_all(tag):
 		if text in el.text:
 			return el
 
@@ -145,7 +145,7 @@ def format_abstract(el):
 	elif el.name in ("ul", "ol"):
 		# can't see a way to properly do ul in running text, so folding
 		# it to ol.
-		for index, child in enumerate(el.findAll("li", recursive=False)):
+		for index, child in enumerate(el.find_all("li", recursive=False)):
 			accum.append(" (%s) %s "%(index+1, format_abstract(child)))
 
 	else:
@@ -168,7 +168,7 @@ def get_abstract_text(soup):
 	we reach a div after that.
 	"""
 	abstract_head = get_enclosing_element(soup, "h2", "Abstract")
-	el = abstract_head.nextSibling
+	el = abstract_head.next_sibling
 	accum = []
 	while getattr(el, "name", None)!="div":
 		try:
@@ -177,7 +177,7 @@ def get_abstract_text(soup):
 			# div found as abstract child, suspect malformed document.
 			accum.append(rest.payload)
 			break
-		el = el.nextSibling
+		el = el.next_sibling
 	return " ".join(accum)
 
 
@@ -233,9 +233,9 @@ def parse_landing_page(url, local_metadata):
 	soup = BeautifulSoup(get_with_cache(url), 'html5lib')
 	authors = clean_field(
 		get_enclosing_element(soup, "dt", "Author(s):"
-			).findNextSibling("dd").getText(" "))
+			).find_next_sibling("dd").getText(" "))
 	editors = clean_field(get_enclosing_element(soup, "dt", "Editor(s):"
-			).findNextSibling("dd").getText(" "))
+			).find_next_sibling("dd").getText(" "))
 	tagline = soup.find("h2").text
 	date = parse_subhead_date(tagline)
 	abstract = get_abstract_text(soup).replace("\r", "")
@@ -270,8 +270,8 @@ def iter_links_from_table(src_table, rec_class):
 
 	The function yields anchor elements.
 	"""
-	for links in src_table.findAll("td", {"class": "versionold"}):
-		for anchor in links.findAll("a", {"class": rec_class}):
+	for links in src_table.find_all("td", {"class": "versionold"}):
+		for anchor in links.find_all("a", {"class": rec_class}):
 			yield anchor
 
 
@@ -284,9 +284,9 @@ def iter_REC_URLs(doc_index, repo_url):
 	"""
 	seen_stds = set()
 	rec_table = get_enclosing_element(doc_index, "h3",
-		"Technical Specifications").findNextSibling("table")
+		"Technical Specifications").find_next_sibling("table")
 	en_table = get_enclosing_element(doc_index, "h3",
-		"Endorsed Note").findNextSibling("table")
+		"Endorsed Note").find_next_sibling("table")
 
 	for anchor in itertools.chain(
 			iter_links_from_table(rec_table, "rec"),
